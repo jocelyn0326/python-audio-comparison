@@ -39,6 +39,7 @@ class DataStore:
 
     async def add(self, channel: str, timestamp: int, raw_data: bytes) -> CiModel:
         lock = self.locks[channel]
+        # When the deque is locked, wait for 10 seconds and then raise timeout.
         with acquire_timeout(lock, 10) as acquired:
             if not acquired:
                 raise Exception(f"Get lock of channel ({channel}) timeout.")
@@ -54,7 +55,7 @@ class DataStore:
             self._validate(new_block, last_block)
 
             # Handle queue overflow
-            if len(channel_q) > self.max_length:
+            if len(channel_q) >= self.max_length:
                 # Pop the oldest block
                 logger.info("The oldest data is popped.")
                 channel_q.popleft()

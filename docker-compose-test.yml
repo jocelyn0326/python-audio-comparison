@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+  test-web:
+    build: .
+    command: bash -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - .:/code
+    networks:
+      - test-syncopate
+    env_file:
+      - test.env
+    depends_on:
+      - test-mongo
+  test-mongo:
+    image: mongo
+    restart: always
+    networks:
+      - test-syncopate
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo_user
+      MONGO_INITDB_ROOT_PASSWORD: mongo_password
+
+      
+networks:
+  test-syncopate:

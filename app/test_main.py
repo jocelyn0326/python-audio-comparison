@@ -77,7 +77,7 @@ def test_add_data_to_channel_with_wrong_size(channel, timestamp):
         )
         assert response.status_code == 400
         assert response.json() == {"detail": "Invalid data size"}
-        # TODO: len(ds.map[channel]) == ?
+
 def test_add_data_to_deque_and_check_data_size(channel,timestamp):
     
    with TestClient(app) as client:

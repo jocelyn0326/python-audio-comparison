@@ -1,5 +1,5 @@
 import logging
-from collections import defaultdict, deque
+from collections import defaultdict
 from datetime import datetime
 from threading import Lock
 from typing import Optional
@@ -7,7 +7,7 @@ from typing import Optional
 from bson import Binary
 from pydantic import BaseModel
 
-from .constants import BLOCK_SIZE, QUEUE_LENGTH
+from .constants import BLOCK_SIZE
 from .db.models import CiModel
 from .utils import acquire_timeout
 
@@ -20,11 +20,8 @@ class Block(BaseModel):
 
 
 class DataStore:
-    DEFAULT_MAX_LENGTH: int = QUEUE_LENGTH
-
-    def __init__(self, max_length: int = DEFAULT_MAX_LENGTH) -> None:
-        self.max_length = max_length
-        self.map: defaultdict[str, deque[Block]] = defaultdict(lambda:deque(maxlen=self.max_length) )
+    def __init__(self) -> None:
+        self.map: defaultdict[str, Block] = defaultdict(Block)
         self.locks: defaultdict[str, Lock] = defaultdict(Lock)
 
     def _validate(self, new_block: Block, last_block: Optional[Block] = None) -> None:
@@ -35,6 +32,7 @@ class DataStore:
             raise ValueError("Invalid raw data size")
 
     def calculate_ci_value(self, new_raw_data: bytes, last_raw_data: bytes) -> bytes:
+        
         return bytes(a ^ b for a, b in zip(new_raw_data, last_raw_data))
 
     async def add(self, channel: str, timestamp: int, raw_data: bytes) -> CiModel:
@@ -44,24 +42,21 @@ class DataStore:
             if not acquired:
                 raise Exception(f"Get lock of channel ({channel}) timeout.")
 
-            channel_q = self.map[channel]
             new_block: Block = Block(timestamp=timestamp, raw_data=raw_data)
-            last_block: Optional[Block] = None
+            last_block: Optional[Block] = self.map.get(channel)
             ci_value_bytes: bytes = b""
-            if channel_q:
-                last_block = channel_q[-1]
 
             # Validate blocks
             self._validate(new_block, last_block)
-
-            channel_q.append(new_block)
-
+    
             if last_block:
                 ci_value_bytes = self.calculate_ci_value(
                     new_block.raw_data, last_block.raw_data
                 )
                 
                 # TODO: Complete the second and third formulas later.
+
+            self.map[channel] = new_block
 
             now = datetime.now()
             return CiModel(

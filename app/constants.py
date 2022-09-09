@@ -1,2 +1,1 @@
 BLOCK_SIZE = int(1024 / 8)  # Bytes
-QUEUE_LENGTH = 86401

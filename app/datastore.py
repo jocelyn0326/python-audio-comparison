@@ -34,7 +34,7 @@ class DataStore:
         if len(new_block.raw_data) != BLOCK_SIZE:
             raise ValueError("Invalid raw data size")
 
-    def get_ci_value(self, new_raw_data: bytes, last_raw_data: bytes) -> bytes:
+    def calculate_ci_value(self, new_raw_data: bytes, last_raw_data: bytes) -> bytes:
         return bytes(a ^ b for a, b in zip(new_raw_data, last_raw_data))
 
     async def add(self, channel: str, timestamp: int, raw_data: bytes) -> CiModel:
@@ -54,16 +54,10 @@ class DataStore:
             # Validate blocks
             self._validate(new_block, last_block)
 
-            # # Handle queue overflow
-            # if len(channel_q) >= self.max_length:
-            #     # Pop the oldest block
-            #     logger.info("The oldest data is popped.")
-            #     channel_q.popleft()
-
             channel_q.append(new_block)
 
             if last_block:
-                ci_value_bytes = self.get_ci_value(
+                ci_value_bytes = self.calculate_ci_value(
                     new_block.raw_data, last_block.raw_data
                 )
                 

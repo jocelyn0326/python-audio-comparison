@@ -23,9 +23,9 @@ class DataStore:
     DEFAULT_MAX_LENGTH: int = QUEUE_LENGTH
 
     def __init__(self, max_length: int = DEFAULT_MAX_LENGTH) -> None:
-        self.map: defaultdict[str, deque[Block]] = defaultdict(deque)
-        self.locks: defaultdict[str, Lock] = defaultdict(Lock)
         self.max_length = max_length
+        self.map: defaultdict[str, deque[Block]] = defaultdict(lambda:deque(maxlen=self.max_length) )
+        self.locks: defaultdict[str, Lock] = defaultdict(Lock)
 
     def _validate(self, new_block: Block, last_block: Optional[Block] = None) -> None:
         if last_block and last_block.timestamp + 1 != new_block.timestamp:
@@ -54,11 +54,11 @@ class DataStore:
             # Validate blocks
             self._validate(new_block, last_block)
 
-            # Handle queue overflow
-            if len(channel_q) >= self.max_length:
-                # Pop the oldest block
-                logger.info("The oldest data is popped.")
-                channel_q.popleft()
+            # # Handle queue overflow
+            # if len(channel_q) >= self.max_length:
+            #     # Pop the oldest block
+            #     logger.info("The oldest data is popped.")
+            #     channel_q.popleft()
 
             channel_q.append(new_block)
 

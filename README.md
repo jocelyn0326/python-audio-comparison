@@ -40,6 +40,5 @@ body: form-data
 
     
 ## Future TODO list
-- [ ] Use Redis to store the deque data
 - [ ] 2nd Formula
 - [ ] 3rd Formula

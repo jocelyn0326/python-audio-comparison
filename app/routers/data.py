@@ -1,3 +1,4 @@
+from cmath import exp
 import logging
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
@@ -29,6 +30,9 @@ async def deliver(
     except Exception as e:
         logger.error(f"Unexpected error raised: {repr(e)}")
         raise HTTPException(status_code=400, detail="Unknown error")
-
-    created_ci_id: str = await db.add_ci(ci)
-    logger.info(f"Ci ({created_ci_id}) is created.")
+    try:
+        created_ci_id: str = await db.add_ci(ci)
+        logger.info(f"Ci ({created_ci_id}) is created.")
+    except Exception as e:
+        logger.error(f"Unexpected error raised: {repr(e)}")
+        raise HTTPException(status_code=400, detail="Unknown error")
